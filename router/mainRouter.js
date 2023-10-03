@@ -5,6 +5,8 @@ const {
     signup,
     login,
     getUser,
+    editProfileImage,
+    changePassword
 } = require("../controllers/mainController");
 const {
     validateSignUp,
@@ -15,5 +17,7 @@ const {
 router.post("/signup", validateSignUp, signup);
 router.post("/login", validateLogIn, login);
 router.get("/getUser", validateUser, getUser);
+router.post("/newImage", validateUser, editProfileImage);
+router.post("/newPassword", validateUser, changePassword);
 
 module.exports = router;

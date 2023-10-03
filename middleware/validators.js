@@ -13,7 +13,7 @@ module.exports = {
             password.length < 4 ||
             password.length > 20 ||
             !password.match(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])/)
-        ) return resSend(res, true, null, 'Wrong username or password');
+        ) return resSend(res, true, null, 'Incorrect username or password');
         const userExists = await userDb.findOne( {username: username});
         if (userExists) return resSend(res, true, null, 'Username taken');
         next();
@@ -25,7 +25,7 @@ module.exports = {
             password.length < 4 ||
             password.length > 20 ||
             !password.match(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])/)
-        ) return resSend(res, true, null, 'Wrong username or password');
+        ) return resSend(res, true, null, 'Incorrect username or password');
         next();
     },
     validateUser: (req, res, next) => {
@@ -33,6 +33,7 @@ module.exports = {
         jwt.verify(token, process.env.JWT_SECRET, (err, data) => {
             if (err) {
                 resSend(res, true, null, 'Authorization failed');
+                return;
             }
             req.user = data;
             next();
