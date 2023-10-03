@@ -56,6 +56,12 @@ module.exports = {
         }
         resSend(res, false, myUser, '');
     },
+    getAllUsers: async (req, res) => {
+        const user = req.user;
+        const allUsers = await userDb.find({},{password: 0});
+
+        resSend(res, false, allUsers, '');
+    },
     editProfileImage: async (req, res) => {
         const {image} = req.body;
         const user = req.user;

@@ -5,6 +5,7 @@ const {
     signup,
     login,
     getUser,
+    getAllUsers,
     editProfileImage,
     changePassword
 } = require("../controllers/mainController");
@@ -17,6 +18,7 @@ const {
 router.post("/signup", validateSignUp, signup);
 router.post("/login", validateLogIn, login);
 router.get("/getUser", validateUser, getUser);
+router.get("/getAllUsers", validateUser, getAllUsers);
 router.post("/newImage", validateUser, editProfileImage);
 router.post("/newPassword", validateUser, changePassword);
 
