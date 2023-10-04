@@ -14,6 +14,20 @@ const postSchema = new Schema({
         type: String,
         required: true,
     },
+    comments: {
+        type: Array,
+        required: true,
+        default: []
+    },
+    likes: {
+        type: Array,
+        required: true,
+        default: []
+    },
+    timestamp: {
+        type: Number,
+        required: true
+    }
 });
 
 const user = mongoose.model("ft-posts", postSchema);

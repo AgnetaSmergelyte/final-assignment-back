@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userDb = require("../schemas/userSchema");
+const postDb = require("../schemas/postSchema");
 
 const resSend = (res, error, data, message) => {
     res.send({error, data, message});
@@ -58,9 +59,21 @@ module.exports = {
     },
     getAllUsers: async (req, res) => {
         const user = req.user;
-        const allUsers = await userDb.find({},{password: 0});
-
-        resSend(res, false, allUsers, '');
+        try {
+            const allUsers = await userDb.find({}, {password: 0});
+            resSend(res, false, allUsers, '');
+        } catch (err) {
+            resSend(res, true, null, '');
+        }
+    },
+    getAllPostsAndUsers: async (req, res) => {
+        try {
+            const posts = await postDb.find();
+            const allUsers = await userDb.find({}, {password: 0});
+            resSend(res, false, {posts, allUsers}, '');
+        } catch (err) {
+            resSend(res, true, null, '');
+        }
     },
     editProfileImage: async (req, res) => {
         const {image} = req.body;
