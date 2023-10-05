@@ -7,6 +7,7 @@ const {
     getUser,
     getAllUsers,
     getAllPostsAndUsers,
+    getSinglePost,
     editProfileImage,
     changePassword
 } = require("../controllers/mainController");
@@ -21,6 +22,7 @@ router.post("/login", validateLogIn, login);
 router.get("/getUser", validateUser, getUser);
 router.get("/getAllUsers", validateUser, getAllUsers);
 router.get("/getAllPostsAndUsers", getAllPostsAndUsers);
+router.get("/posts/:id", getSinglePost);
 router.post("/newImage", validateUser, editProfileImage);
 router.post("/newPassword", validateUser, changePassword);
 

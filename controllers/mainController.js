@@ -58,7 +58,6 @@ module.exports = {
         resSend(res, false, myUser, '');
     },
     getAllUsers: async (req, res) => {
-        const user = req.user;
         try {
             const allUsers = await userDb.find({}, {password: 0});
             resSend(res, false, allUsers, '');
@@ -73,6 +72,16 @@ module.exports = {
             resSend(res, false, {posts, allUsers}, '');
         } catch (err) {
             resSend(res, true, null, '');
+        }
+    },
+    getSinglePost: async (req, res) => {
+        const {id} = req.params;
+        try {
+            const post = await postDb.findOne({_id: id});
+            const author = await userDb.findOne({username: post.author});
+            resSend(res, false, {post, author}, '');
+        } catch (err) {
+            resSend(res, true, null, 'Post not found');
         }
     },
     editProfileImage: async (req, res) => {

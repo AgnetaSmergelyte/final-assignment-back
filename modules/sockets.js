@@ -32,7 +32,6 @@ module.exports = (server) => {
             if (!currentUser) return;
             const author = currentUser.username;
             if (!postInfo || postInfo.image === '' || postInfo.text === '') return;
-            const timestamp = Date.now()
             const post = new postDb({
                 author,
                 image: postInfo.image,
@@ -48,7 +47,37 @@ module.exports = (server) => {
         socket.on('newUser', async username => {
             const newUser = await userDb.find({username}, {password: 0});
             if (newUser.length === 1) io.emit('newUserConnected', newUser[0]);
-        })
+        });
+
+        // socket.on('getSinglePost', async postId => {
+        //     try {
+        //         const post = await postDb.findOne({_id: postId});
+        //         const author = await userDb.findOne({username: post.author});
+        //         socket.emit('singlePost', {post, author});
+        //     } catch (err) {
+        //         socket.emit('singlePost', {post: null, author: null});
+        //     }
+        // });
+
+        socket.on('like', async postId => {
+            const currentUser = onlineUsers.find(x => x.socketId === socket.id);
+            if (!currentUser) return;
+            try {
+                const likedPost = await postDb.findOne({_id: postId});
+                let likes = [...likedPost.likes];
+                if (likes.includes(currentUser.username)) {
+                    likes = likes.filter(x => x !== currentUser.username);
+                } else {
+                    likes.push(currentUser.username)
+                }
+                const updatedPost = await postDb.findOneAndUpdate(
+                    {_id: postId},
+                    {$set: {likes}},
+                    {new: true}
+                )
+                io.emit('post', updatedPost);
+            } catch (err) {}
+        });
 
         socket.on('logout', () => {
             onlineUsers = onlineUsers.filter(x => x.socketId !== socket.id);
