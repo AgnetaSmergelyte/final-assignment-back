@@ -30,5 +30,5 @@ const postSchema = new Schema({
     }
 });
 
-const user = mongoose.model("ft-posts", postSchema);
-module.exports = user;
+const post = mongoose.model("ft-posts", postSchema);
+module.exports = post;

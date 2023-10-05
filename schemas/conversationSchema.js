@@ -12,5 +12,5 @@ const conversationSchema = new Schema({
     },
 });
 
-const user = mongoose.model("ft-conversations", conversationSchema);
-module.exports = user;
+const conversation = mongoose.model("ft-conversations", conversationSchema);
+module.exports = conversation;

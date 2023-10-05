@@ -102,6 +102,45 @@ module.exports = (server) => {
             } catch (err) {}
         });
 
+        socket.on('message', async val => {
+           const sender = onlineUsers.find(x => x.socketId === socket.id);
+           const message = val.message;
+           const recipient = val.recipient;
+           if (!sender || !recipient || message.length === 0 || message.length > 1000) return;
+           const newMessage = {
+               author: sender.username,
+               text: message,
+               timestamp: Date.now()
+           }
+           let messages = [];
+           try {
+               let conversationID;
+               const conversations = await conversationDb.find();
+               conversations.map(x => {
+                   if (x.participants.includes(sender.username) && x.participants.includes(recipient)) {
+                       conversationID = x._id;
+                       messages = [...x.messages, newMessage];
+                   }
+               })
+               if (conversationID) {
+                   const updatedConversation = await conversationDb.findOneAndUpdate(
+                       {_id: conversationID},
+                       {$set: {messages}},
+                       {new: true}
+                   )
+               } else {
+                   messages.push(newMessage);
+                   const conversation = new conversationDb({
+                       participants: [sender.username, recipient],
+                       messages
+                   })
+                   conversation.save();
+               }
+           } catch (err) {
+               console.log('error')
+           }
+        });
+
         socket.on('logout', () => {
             onlineUsers = onlineUsers.filter(x => x.socketId !== socket.id);
         });
