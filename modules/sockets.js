@@ -79,6 +79,29 @@ module.exports = (server) => {
             } catch (err) {}
         });
 
+        socket.on('comment', async val => {
+            const postId = val.postId;
+            const comment = val.comment;
+            const currentUser = onlineUsers.find(x => x.socketId === socket.id);
+            if (!postId || comment === '' || !currentUser) return;
+            try {
+                const commentedPost = await postDb.findOne({_id: postId});
+                let comments = [...commentedPost.comments];
+                const newComment = {
+                    author: currentUser.username,
+                    text: comment,
+                    timestamp: Date.now()
+                }
+                comments.push(newComment)
+                const updatedPost = await postDb.findOneAndUpdate(
+                    {_id: postId},
+                    {$set: {comments}},
+                    {new: true}
+                )
+                io.emit('post', updatedPost);
+            } catch (err) {}
+        });
+
         socket.on('logout', () => {
             onlineUsers = onlineUsers.filter(x => x.socketId !== socket.id);
         });
