@@ -12,8 +12,6 @@ module.exports = (server) => {
         }
     });
     io.on('connection', (socket) => {
-        console.log('a user connected', socket.id);
-
         socket.on('logged', async user => {
             const newUser = {...user, socketId: socket.id};
             if (!onlineUsers.find(x => x.socketId === socket.id)) {
@@ -70,16 +68,6 @@ module.exports = (server) => {
             const newUser = await userDb.find({username}, {password: 0});
             if (newUser.length === 1) io.emit('newUserConnected', newUser[0]);
         });
-
-        // socket.on('getSinglePost', async postId => {
-        //     try {
-        //         const post = await postDb.findOne({_id: postId});
-        //         const author = await userDb.findOne({username: post.author});
-        //         socket.emit('singlePost', {post, author});
-        //     } catch (err) {
-        //         socket.emit('singlePost', {post: null, author: null});
-        //     }
-        // });
 
         socket.on('like', async postId => {
             const currentUser = onlineUsers.find(x => x.socketId === socket.id);
@@ -161,9 +149,7 @@ module.exports = (server) => {
                    })
                    conversation.save();
                }
-           } catch (err) {
-               console.log('error')
-           }
+           } catch (err) {}
         });
 
         socket.on('logout', () => {
@@ -172,7 +158,6 @@ module.exports = (server) => {
 
         socket.on('disconnect', () => {
             onlineUsers = onlineUsers.filter(x => x.socketId !== socket.id);
-            console.log('A user disconnected');
         });
     });
 }
