@@ -14,7 +14,7 @@ module.exports = (server) => {
     io.on('connection', (socket) => {
         console.log('a user connected', socket.id);
 
-        socket.on('logged', user => {
+        socket.on('logged', async user => {
             const newUser = {...user, socketId: socket.id};
             if (!onlineUsers.find(x => x.socketId === socket.id)) {
                 for (let i = 0; i < onlineUsers.length; i++) {
@@ -24,7 +24,29 @@ module.exports = (server) => {
                     }
                 }
                 onlineUsers.push(newUser);
-            }
+            } else return;
+            //find all conversations and join rooms
+            try {
+                const conversations = await conversationDb.find({participants: newUser.username});
+                const users = await userDb.find();
+                const chatWith = [];
+                conversations.map(x => {
+                    const room = (x._id).toString();
+                    socket.join(room);
+                    socket.emit('newMessage', x._id)
+                    const username = x.participants.filter(name => name !== newUser.username);
+                    const otherUser = users.find(u => u.username === username[0]);
+                    if (otherUser) {
+                        chatWith.push({
+                            _id: x._id,
+                            username: username[0],
+                            image: otherUser.image,
+                            messages: x.messages
+                        })
+                    }
+                });
+                socket.emit('getConversations', chatWith);
+            } catch (err){}
         });
 
         socket.on('newPost', async postInfo => {
@@ -115,9 +137,9 @@ module.exports = (server) => {
            let messages = [];
            try {
                let conversationID;
-               const conversations = await conversationDb.find();
+               const conversations = await conversationDb.find({participants: sender.username});
                conversations.map(x => {
-                   if (x.participants.includes(sender.username) && x.participants.includes(recipient)) {
+                   if (x.participants.includes(recipient)) {
                        conversationID = x._id;
                        messages = [...x.messages, newMessage];
                    }
@@ -128,6 +150,9 @@ module.exports = (server) => {
                        {$set: {messages}},
                        {new: true}
                    )
+                   const room = conversationID.toString();
+                   console.log(room)
+                   io.to(room).emit('newMessage', {id: room, message: newMessage});
                } else {
                    messages.push(newMessage);
                    const conversation = new conversationDb({
