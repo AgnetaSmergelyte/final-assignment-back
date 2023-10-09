@@ -17,7 +17,6 @@ module.exports = (server) => {
                 for (let i = 0; i < onlineUsers.length; i++) {
                     if (onlineUsers[i].username === newUser.username) {
                         onlineUsers[i].socketId = socket.id;
-                        return;
                     }
                 }
                 onlineUsers.push(newUser);
