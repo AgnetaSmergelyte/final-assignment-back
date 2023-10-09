@@ -2,7 +2,6 @@ const {Server} = require('socket.io');
 const userDb = require("../schemas/userSchema");
 const conversationDb = require("../schemas/conversationSchema");
 const postDb = require("../schemas/postSchema");
-
 let onlineUsers = [];
 
 module.exports = (server) => {
@@ -22,7 +21,7 @@ module.exports = (server) => {
                     }
                 }
                 onlineUsers.push(newUser);
-            } else return;
+            }
             //find all conversations and join rooms
             try {
                 const conversations = await conversationDb.find({participants: newUser.username});
@@ -31,7 +30,6 @@ module.exports = (server) => {
                 conversations.map(x => {
                     const room = (x._id).toString();
                     socket.join(room);
-                    socket.emit('newMessage', x._id)
                     const username = x.participants.filter(name => name !== newUser.username);
                     const otherUser = users.find(u => u.username === username[0]);
                     if (otherUser) {
@@ -46,7 +44,9 @@ module.exports = (server) => {
                 socket.emit('getConversations', chatWith);
             } catch (err){}
         });
-
+        socket.on('join', room => {
+           socket.join(room);
+        });
         socket.on('newPost', async postInfo => {
             const currentUser = onlineUsers.find(x => x.socketId === socket.id);
             if (!currentUser) return;
@@ -63,12 +63,10 @@ module.exports = (server) => {
                 io.emit('post', savedPost);
             } catch (err) {}
         });
-
         socket.on('newUser', async username => {
             const newUser = await userDb.find({username}, {password: 0});
             if (newUser.length === 1) io.emit('newUserConnected', newUser[0]);
         });
-
         socket.on('like', async postId => {
             const currentUser = onlineUsers.find(x => x.socketId === socket.id);
             if (!currentUser) return;
@@ -88,7 +86,6 @@ module.exports = (server) => {
                 io.emit('post', updatedPost);
             } catch (err) {}
         });
-
         socket.on('comment', async val => {
             const postId = val.postId;
             const comment = val.comment;
@@ -111,7 +108,6 @@ module.exports = (server) => {
                 io.emit('post', updatedPost);
             } catch (err) {}
         });
-
         socket.on('message', async val => {
            const sender = onlineUsers.find(x => x.socketId === socket.id);
            const message = val.message;
@@ -133,29 +129,52 @@ module.exports = (server) => {
                    }
                })
                if (conversationID) {
-                   const updatedConversation = await conversationDb.findOneAndUpdate(
+                   await conversationDb.findOneAndUpdate(
                        {_id: conversationID},
                        {$set: {messages}},
                        {new: true}
                    )
                    const room = conversationID.toString();
-                   console.log(room)
                    io.to(room).emit('newMessage', {id: room, message: newMessage});
                } else {
+                   //save conversation to db
                    messages.push(newMessage);
                    const conversation = new conversationDb({
                        participants: [sender.username, recipient],
                        messages
                    })
                    conversation.save();
+                   const room = (conversation._id).toString();
+                   //find other user and send conversation object with its photo
+                   const otherUser = await userDb.findOne({username: recipient});
+                   if (!otherUser) return;
+                   const newChat = {
+                       _id: room,
+                       username: recipient,
+                       image: otherUser.image,
+                       messages
+                   }
+                   socket.emit('newConversation', newChat);
+                   //if other user online, send data to him
+                   const isOtherUserOnline = onlineUsers.find(x => x.username === recipient);
+                   if (isOtherUserOnline) {
+                       const recipientsSocket = isOtherUserOnline.socketId;
+                       const thisUser = await userDb.findOne({username: sender.username});
+                       if (!thisUser) return;
+                       const chatInfo = {
+                           _id: room,
+                           username: sender.username,
+                           image: thisUser.image,
+                           messages
+                       }
+                       io.to(recipientsSocket).emit('newConversation', chatInfo);
+                   }
                }
            } catch (err) {}
         });
-
         socket.on('logout', () => {
             onlineUsers = onlineUsers.filter(x => x.socketId !== socket.id);
         });
-
         socket.on('disconnect', () => {
             onlineUsers = onlineUsers.filter(x => x.socketId !== socket.id);
         });
