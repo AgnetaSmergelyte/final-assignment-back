@@ -13,14 +13,7 @@ module.exports = (server) => {
     io.on('connection', (socket) => {
         socket.on('logged', async user => {
             const newUser = {...user, socketId: socket.id};
-            if (!onlineUsers.find(x => x.socketId === socket.id)) {
-                for (let i = 0; i < onlineUsers.length; i++) {
-                    if (onlineUsers[i].username === newUser.username) {
-                        onlineUsers[i].socketId = socket.id;
-                    }
-                }
-                onlineUsers.push(newUser);
-            }
+            onlineUsers.unshift(newUser);
             //find all conversations and join rooms
             try {
                 const conversations = await conversationDb.find({participants: newUser.username});
