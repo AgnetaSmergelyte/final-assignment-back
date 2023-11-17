@@ -137,7 +137,7 @@ module.exports = (server) => {
                    })
                    conversation.save();
                    const room = (conversation._id).toString();
-                   //find other user and send conversation object with its photo
+                   //find other user and send conversation object with users photo
                    const otherUser = await userDb.findOne({username: recipient});
                    if (!otherUser) return;
                    const newChat = {
